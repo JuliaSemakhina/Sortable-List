@@ -1,114 +1,87 @@
-const balance = document.getElementById('balance');
-const money_plus = document.getElementById('money-plus');
-const money_minus = document.getElementById('money-minus');
-const list = document.getElementById('list');
-const form = document.getElementById('form');
-const text = document.getElementById('text');
-const amount = document.getElementById('amount');
+const draggable_list = document.getElementById('draggable-list');
+const check = document.getElementById('check');
 
-// const dummyTransactions = [
-// 	{id: 1, text: 'Flowers', amount: -20},
-// 	{id: 2, text: 'Salary', amount: 300},
-// 	{id: 3, text: 'Book', amount: -15},
-// 	{id: 4, text: 'Camera', amount: 250}
-// ];
+const richestPeople = [
+	'Russia',
+	'Canada',
+	'United States',
+	'China',
+	'Brazil',
+	'Australia',
+	'India',
+	'Argentina',
+	'Kazakhstan',
+	'Algeria'
+];
 
-const localStorageTransactions = JSON.parse(localStorage.getItem("transactions"));
+//Store List Items
+const listItems = [];
 
-let transactions = localStorage.getItem('transactions') !== null ? localStorageTransactions : [];
+let dragStartIndex;
 
-//Add new transaction
-function addTransaction(e) {
-	e.preventDefault();
+createList();
 
-	if(text.value.trim() === '' || amount.value.trim() === '') {
-		alert('Please add text and amount')
-	} else {
-		const transaction = {
-			id: generateID(),
-			text: text.value,
-			amount: +amount.value
-		 };
-		transactions.push(transaction);
+//Insert list items into DOM
 
-		addTransactionDOM(transaction);
+function createList() {
+	[...richestPeople]
+	.map(a => ({ value: a, sort: Math.random()}))
+	.sort((a,b)=> a.sort - b.sort)
+	.map(a=> a.value)
+	.forEach((person, index)=> {
+		console.log(person);
 
-		updateValues();
+		const listItem= document.createElement('li');
 
-		updateLocalStorage();
+		listItem.setAttribute('data-index', index);
 
-		text.value = '';
-		amount.value = '';
+		listItem.innerHTML = `   
+			<span class="number">${index + 1}</span>
+			<div class="draggable" draggable="true">
+			<p class="person-name">${person}</p>
+			<i class='fas fa-grip-lines'></i>
+			</div>
+		`;
+		listItems.push(listItem);
+		draggable_list.appendChild(listItem);
+	});
 
-	}
+	addeventListeners();
 }
 
-//Generate random id
-function generateID() {
-	return Math.floor(Math.random() * 100000000)
+function dragStart(){
+	console.log('Event: ', 'dragstart');
 }
 
-//Add transactions to DOM list
-function addTransactionDOM(transaction) {
-	//Get sign
-	const sign = transaction.amount < 0 ? '-' : '+';
-
-	//Create new element
-	const item = document.createElement('li');
-
-	//Add class based on value
-	item.classList.add(transaction.amount < 0 ? 'minus' : 'plus');
-
-	item.innerHTML = ` 
-		${transaction.text} <span>${sign}${Math.abs(transaction.amount).toFixed(2)}</span> <button class="delete-btn" onclick="removeTransaction(${transaction.id})">x</button>
-	`;
-
-	list.appendChild(item);
+function dragEnter(){
+	console.log('Event: ', 'dragenter');
 }
 
-//Update the balance, income and expense
-function updateValues() {
-	const amounts = transactions.map(trans => 
-		trans.amount);
-	const total = amounts.reduce((acc, item) => (acc += item), 0)
-		.toFixed(2);
-
-	const income = amounts.filter(amount => amount > 0)
-	.reduce((acc, item) => (acc += item), 0)
-	.toFixed(2);
-
-	const expense = (amounts.filter(amount => amount < 0)
-	.reduce((acc, item) => (acc += item), 0) * -1)
-	.toFixed(2);
-
-
-	balance.innerText = `$${total}`;
-	money_plus.innerText = `+$${income}`;
-	money_minus.innerText = `-$${expense}`;
+function dragOver(){
+	console.log('Event: ', 'dragover');
 }
 
-//Remove transaction by ID
-
-function removeTransaction(id) {
-	transactions = transactions.filter(transaction => transaction.id !== id);
-
-	updateLocalStorage();
-	init();
+function dragLeave(){
+	console.log('Event: ', 'dragleave');
 }
 
-//Update local storage transactions
-function updateLocalStorage() {
-	localStorage.setItem('transactions', JSON.stringify(transactions));
+function dragDrop(){
+	console.log('Event: ', 'drop');
 }
 
-//Init app
-function init() {
-	list.innerHTML = '';
 
-	transactions.forEach(addTransactionDOM);
-	updateValues();
+function addeventListeners(){
+	const draggables = document.querySelectorAll('.draggable');
+	const dragListItems = document.querySelectorAll('.draggable-list li');
+
+	draggables.forEach(draggable=> {
+		draggable.addEventListener('dragstart', dragStart)
+		});
+
+	dragListItems.forEach(item=> {
+		item.addEventListener('dragover', dragOver)
+		item.addEventListener('drop', dragDrop)
+		item.addEventListener('dragenter', dragEnter)
+		item.addEventListener('dragleave', dragLeave);
+});
 }
-
-init();
-
-form.addEventListener('submit', addTransaction);
